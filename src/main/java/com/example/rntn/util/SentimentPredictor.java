@@ -139,6 +139,7 @@ public class SentimentPredictor {
         SentimentPredictor p = new SentimentPredictor(model);
         int cls = p.predictClass(sentence);
         String label = p.predictLabel(sentence);
+        // Output results for CLI usage
         System.out.println("Predicted class id: " + cls);
         System.out.println("Predicted label: " + label);
     }
