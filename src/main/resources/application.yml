@@ -1,0 +1,140 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /
+
+spring:
+  application:
+    name: rntn-sentiment-api
+
+  # Configuración de base de datos MySQL
+  datasource:
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:rntn_db}?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+    username: ${DB_USER:rntn_user}
+    password: ${DB_PASSWORD:rntn_password}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
+# Configuración JWT
+jwt:
+  secret: ${JWT_SECRET:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
+  expiration: ${JWT_EXPIRATION:3600000}  # 1 hora en milisegundos
+
+  # Configuración JPA/Hibernate
+  jpa:
+    hibernate:
+      ddl-auto: validate  # validate en producción, update en desarrollo
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+        format_sql: true
+        use_sql_comments: true
+        jdbc:
+          batch_size: 20
+        order_inserts: true
+        order_updates: true
+    open-in-view: false
+
+  # Configuración Flyway para migraciones
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    locations: classpath:db/migration
+    validate-on-migrate: true
+
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 100MB
+
+  task:
+    execution:
+      pool:
+        core-size: 2
+        max-size: 5
+        queue-capacity: 100
+
+# Configuración custom RNTN
+rntn:
+  model:
+    default-path: models/out-model.ser.gz
+    directory: models/
+  data:
+    directory: data/
+  training:
+    max-memory: 6g
+    default-hidden-units: 25
+    default-classes: 5
+  sentiment:
+    labels:
+      - name: ANXIETY
+        index: 0
+        description: "Anxious or worried state"
+        risk-level: MEDIO
+      - name: SUICIDAL
+        index: 1
+        description: "Suicidal thoughts or expressions"
+        risk-level: ALTO
+      - name: ANGER
+        index: 2
+        description: "Angry or frustrated state"
+        risk-level: MEDIO
+      - name: SADNESS
+        index: 3
+        description: "Sad or depressed state"
+        risk-level: MEDIO
+      - name: FRUSTRATION
+        index: 4
+        description: "Frustrated state"
+        risk-level: BAJO
+
+# Configuración de logging
+logging:
+  level:
+    com.example.rntn: DEBUG
+    edu.stanford.nlp: WARN
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    org.springframework.jdbc.core: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/rntn-api.log
+    max-size: 10MB
+    max-history: 30
+
+# Actuator endpoints
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: when-authorized
+  health:
+    db:
+      enabled: true
+    diskspace:
+      enabled: true
+
+# OpenAPI/Swagger configuración
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+    enabled: true
+  swagger-ui:
+    path: /swagger-ui.html
+    operationsSorter: method
+    tagsSorter: alpha
+    enabled: true
+    try-it-out-enabled: true
+  show-actuator: true
+

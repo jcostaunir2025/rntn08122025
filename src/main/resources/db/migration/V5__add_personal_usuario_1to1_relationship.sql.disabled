@@ -1,0 +1,158 @@
+-- ============================================================================
+-- ALTER MIGRATION: Add 1:1 Relationship between Personal and Usuario
+-- ============================================================================
+-- Version: V5
+-- Date: 2025-12-21
+-- Description: Adds 1:1 relationship between personal and usuario tables
+--              and enhances personal table with contact information
+-- ============================================================================
+
+-- ----------------------------------------------------------------------------
+-- Step 1: Add new columns to personal table
+-- ----------------------------------------------------------------------------
+
+-- Add email field
+ALTER TABLE personal
+ADD COLUMN email_personal VARCHAR(100) NULL
+COMMENT 'Contact email for medical staff'
+AFTER nombre_personal;
+
+-- Add telefono field
+ALTER TABLE personal
+ADD COLUMN telefono_personal VARCHAR(20) NULL
+COMMENT 'Contact phone for medical staff'
+AFTER email_personal;
+
+-- Add foreign key column for 1:1 relationship with usuario
+ALTER TABLE personal
+ADD COLUMN id_usuario INT UNIQUE NULL
+COMMENT '1:1 relationship with usuario - Each staff member has one system user'
+AFTER id_personal;
+
+-- ----------------------------------------------------------------------------
+-- Step 2: Add foreign key constraint
+-- ----------------------------------------------------------------------------
+
+ALTER TABLE personal
+ADD CONSTRAINT fk_personal_usuario
+FOREIGN KEY (id_usuario) REFERENCES usuario(id_usuario)
+ON DELETE SET NULL
+ON UPDATE CASCADE;
+
+-- ----------------------------------------------------------------------------
+-- Step 3: Add indexes for new fields
+-- ----------------------------------------------------------------------------
+
+-- Index for email searches
+CREATE INDEX idx_email_personal ON personal(email_personal);
+
+-- Index for usuario relationship (already UNIQUE, but explicit index for queries)
+CREATE INDEX idx_personal_id_usuario ON personal(id_usuario);
+
+-- ----------------------------------------------------------------------------
+-- Step 4: Add nivel_riesgo to evaluacion_respuesta (if not exists)
+-- ----------------------------------------------------------------------------
+
+ALTER TABLE evaluacion_respuesta
+ADD COLUMN IF NOT EXISTS nivel_riesgo VARCHAR(20) NULL
+COMMENT 'Risk level: BAJO, MEDIO, ALTO'
+AFTER confidence_score;
+
+-- Add index for nivel_riesgo
+CREATE INDEX IF NOT EXISTS idx_nivel_riesgo ON evaluacion_respuesta(nivel_riesgo);
+
+-- ----------------------------------------------------------------------------
+-- Step 5: Add missing fields to evaluacion (if not exists)
+-- ----------------------------------------------------------------------------
+
+ALTER TABLE evaluacion
+ADD COLUMN IF NOT EXISTS titulo_evaluacion VARCHAR(100) NULL
+COMMENT 'Evaluation title'
+AFTER id_consulta;
+
+ALTER TABLE evaluacion
+ADD COLUMN IF NOT EXISTS fecha_evaluacion TIMESTAMP NULL
+COMMENT 'Evaluation date'
+AFTER nombre_evaluacion;
+
+-- ----------------------------------------------------------------------------
+-- Step 6: Add missing fields to evaluacion_pregunta (if not exists)
+-- ----------------------------------------------------------------------------
+
+ALTER TABLE evaluacion_pregunta
+ADD COLUMN IF NOT EXISTS id_evaluacion INT NULL
+COMMENT 'Optional: Link to specific evaluation'
+AFTER id_evaluacion_pregunta;
+
+ALTER TABLE evaluacion_pregunta
+ADD COLUMN IF NOT EXISTS texto_pregunta VARCHAR(500) NULL
+COMMENT 'Question text (legacy field)'
+AFTER id_evaluacion;
+
+-- Add foreign key if it doesn't exist
+ALTER TABLE evaluacion_pregunta
+ADD CONSTRAINT IF NOT EXISTS fk_evaluacion_pregunta_evaluacion
+FOREIGN KEY (id_evaluacion) REFERENCES evaluacion(id_evaluacion)
+ON DELETE CASCADE;
+
+-- Add index
+CREATE INDEX IF NOT EXISTS idx_pregunta_evaluacion ON evaluacion_pregunta(id_evaluacion);
+
+-- ----------------------------------------------------------------------------
+-- Step 7: Update existing personal records with usuarios (if applicable)
+-- ----------------------------------------------------------------------------
+
+-- This section would map existing personal records to usuarios
+-- Example: Update personal records that have matching usernames
+
+-- UPDATE personal p
+-- INNER JOIN usuario u ON LOWER(p.nombre_personal) LIKE CONCAT('%', LOWER(u.nombre_usuario), '%')
+-- SET p.id_usuario = u.id_usuario
+-- WHERE p.id_usuario IS NULL;
+
+-- Manual mapping example (uncomment and adjust as needed):
+-- UPDATE personal SET id_usuario = (SELECT id_usuario FROM usuario WHERE nombre_usuario = 'dra.garcia') WHERE doc_personal = 'DOC-001';
+-- UPDATE personal SET id_usuario = (SELECT id_usuario FROM usuario WHERE nombre_usuario = 'dr.martinez') WHERE doc_personal = 'DOC-002';
+
+-- ----------------------------------------------------------------------------
+-- Step 8: Add table comments for documentation
+-- ----------------------------------------------------------------------------
+
+ALTER TABLE personal COMMENT =
+'Medical staff with 1:1 relationship to system users. Each staff member can have one usuario account for system access.';
+
+-- ============================================================================
+-- END OF MIGRATION
+-- ============================================================================
+
+-- Migration Summary:
+-- ✅ Added email_personal field to personal table
+-- ✅ Added telefono_personal field to personal table
+-- ✅ Added id_usuario field to personal table (1:1 relationship)
+-- ✅ Added UNIQUE constraint on personal.id_usuario (enforces 1:1)
+-- ✅ Added foreign key constraint with ON DELETE SET NULL
+-- ✅ Added indexes for new fields
+-- ✅ Added nivel_riesgo field to evaluacion_respuesta
+-- ✅ Added missing fields to evaluacion and evaluacion_pregunta tables
+
+-- Relationship Details:
+-- - personal.id_usuario -> usuario.id_usuario (1:1)
+-- - UNIQUE constraint ensures each usuario can only be linked to ONE personal record
+-- - NULL is allowed (not all staff need system access)
+-- - ON DELETE SET NULL means if usuario is deleted, personal record remains but link is removed
+-- - ON UPDATE CASCADE means if usuario.id_usuario changes, personal.id_usuario updates automatically
+
+-- Usage Notes:
+-- 1. To create a staff member WITH system access:
+--    a. First create usuario record
+--    b. Then create personal record with id_usuario reference
+--
+-- 2. To create a staff member WITHOUT system access:
+--    - Create personal record with id_usuario = NULL
+--
+-- 3. To link existing personal to usuario:
+--    UPDATE personal SET id_usuario = ? WHERE id_personal = ?;
+--
+-- 4. To check unlinked staff:
+--    SELECT * FROM personal WHERE id_usuario IS NULL;
+

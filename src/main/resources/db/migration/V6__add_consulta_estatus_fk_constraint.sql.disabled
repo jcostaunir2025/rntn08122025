@@ -1,0 +1,119 @@
+-- ============================================================================
+-- ALTER MIGRATION: Add FK Constraint for consulta.estatus_consulta
+-- ============================================================================
+-- Version: V6
+-- Date: 2025-12-21
+-- Description: Adds foreign key constraint to consulta.estatus_consulta
+--              to enforce referential integrity with consulta_estatus table
+--              Implements N:1 relationship (many consultations can share same status)
+-- ============================================================================
+
+-- ----------------------------------------------------------------------------
+-- Step 1: Verify all existing estatus values are valid
+-- ----------------------------------------------------------------------------
+
+-- Check for any invalid status values before adding FK
+-- This query should return 0 rows if all data is valid
+SELECT DISTINCT c.estatus_consulta
+FROM consulta c
+LEFT JOIN consulta_estatus ce ON c.estatus_consulta = ce.nombre_consulta_estatus
+WHERE ce.nombre_consulta_estatus IS NULL;
+
+-- If the above query returns any rows, you need to:
+-- 1. Review the invalid values
+-- 2. Either add them to consulta_estatus table or
+-- 3. Update consulta records to use valid status values
+
+-- ----------------------------------------------------------------------------
+-- Step 2: Update any NULL or invalid status values to default
+-- ----------------------------------------------------------------------------
+
+-- Update NULL values to PENDIENTE
+UPDATE consulta
+SET estatus_consulta = 'PENDIENTE'
+WHERE estatus_consulta IS NULL;
+
+-- Update any status not in consulta_estatus to PENDIENTE
+UPDATE consulta c
+SET c.estatus_consulta = 'PENDIENTE'
+WHERE NOT EXISTS (
+    SELECT 1 FROM consulta_estatus ce
+    WHERE ce.nombre_consulta_estatus = c.estatus_consulta
+);
+
+-- ----------------------------------------------------------------------------
+-- Step 3: Modify column to NOT NULL if it allows NULL
+-- ----------------------------------------------------------------------------
+
+ALTER TABLE consulta
+MODIFY COLUMN estatus_consulta VARCHAR(50) NOT NULL DEFAULT 'PENDIENTE';
+
+-- ----------------------------------------------------------------------------
+-- Step 4: Add foreign key constraint
+-- ----------------------------------------------------------------------------
+
+-- This creates an N:1 relationship: Many consultations can share the same status
+-- For example, multiple consultations can all have status 'PENDIENTE'
+ALTER TABLE consulta
+ADD CONSTRAINT fk_consulta_estatus
+FOREIGN KEY (estatus_consulta)
+REFERENCES consulta_estatus(nombre_consulta_estatus)
+ON DELETE RESTRICT
+ON UPDATE CASCADE;
+
+-- ON DELETE RESTRICT: Cannot delete a status if consultations are using it
+-- ON UPDATE CASCADE: If status name changes in catalog, update all consultations
+
+-- ----------------------------------------------------------------------------
+-- Step 5: Verify constraint was added successfully
+-- ----------------------------------------------------------------------------
+
+-- This query should show the new FK constraint
+SELECT
+    CONSTRAINT_NAME,
+    TABLE_NAME,
+    COLUMN_NAME,
+    REFERENCED_TABLE_NAME,
+    REFERENCED_COLUMN_NAME
+FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
+WHERE TABLE_SCHEMA = DATABASE()
+  AND TABLE_NAME = 'consulta'
+  AND REFERENCED_TABLE_NAME = 'consulta_estatus';
+
+-- ============================================================================
+-- END OF MIGRATION
+-- ============================================================================
+
+-- Migration Summary:
+-- ✅ Added NOT NULL constraint to estatus_consulta
+-- ✅ Added FK constraint: consulta.estatus_consulta -> consulta_estatus.nombre_consulta_estatus
+-- ✅ ON DELETE RESTRICT: Protects status catalog from deletion
+-- ✅ ON UPDATE CASCADE: Keeps data synchronized if status names change
+
+-- Benefits:
+-- ✅ Enforces referential integrity
+-- ✅ Prevents invalid status values
+-- ✅ Clear relationship in schema
+-- ✅ Database-level validation
+
+-- Usage Notes:
+-- 1. Only valid status values from consulta_estatus can be used
+-- 2. Cannot delete a status from consulta_estatus if consultations use it
+-- 3. If a status name is updated in consulta_estatus, all consultations update automatically
+-- 4. Default value 'PENDIENTE' is enforced
+
+-- Testing:
+-- Try to insert invalid status (should fail):
+--   INSERT INTO consulta (id_paciente, id_personal, fechahora_consulta, estatus_consulta)
+--   VALUES (1, 1, NOW(), 'INVALID_STATUS');
+--   -- Error: Cannot add or update a child row: foreign key constraint fails
+
+-- Try to delete used status (should fail):
+--   DELETE FROM consulta_estatus WHERE nombre_consulta_estatus = 'PENDIENTE';
+--   -- Error: Cannot delete or update a parent row: foreign key constraint fails
+
+-- Update status name (should cascade to consultas):
+--   UPDATE consulta_estatus SET nombre_consulta_estatus = 'PENDING'
+--   WHERE nombre_consulta_estatus = 'PENDIENTE';
+--   -- All consultas with 'PENDIENTE' will update to 'PENDING'
+

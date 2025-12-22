@@ -1,0 +1,238 @@
+-- ============================================================================
+-- Stored Procedures para Análisis Agregado de Sentimientos
+-- Version: 1.0
+-- Date: 2025-12-21
+-- Description: Procedimientos almacenados para calcular estadísticas
+--              agregadas de análisis de sentimientos RNTN
+-- ============================================================================
+
+DELIMITER $$
+
+-- Drop procedures if exist
+DROP PROCEDURE IF EXISTS sp_get_sentiment_aggregate_stats$$
+DROP PROCEDURE IF EXISTS sp_get_sentiment_distribution_by_evaluation$$
+DROP PROCEDURE IF EXISTS sp_get_high_risk_alerts$$
+DROP PROCEDURE IF EXISTS sp_get_high_risk_alerts;
+
+DELIMITER $$
+
+-- ============================================================================
+-- Procedimiento 1: Estadísticas Agregadas de Sentimientos (Batch)
+-- ============================================================================
+-- Calcula estadísticas agregadas para un conjunto de IDs de respuestas
+-- Retorna: distribución de sentimientos, confianza promedio, riesgo más alto
+-- ============================================================================
+
+CREATE PROCEDURE sp_get_sentiment_aggregate_stats(
+    IN p_respuesta_ids TEXT  -- IDs separados por coma: "1,2,3,4,5"
+)
+BEGIN
+    -- Tabla temporal para almacenar IDs
+    DROP TEMPORARY TABLE IF EXISTS temp_respuesta_ids;
+    CREATE TEMPORARY TABLE temp_respuesta_ids (
+        id_evaluacion_respuesta BIGINT
+    );
+
+    -- Insertar IDs desde el parámetro de texto
+    SET @sql = CONCAT('INSERT INTO temp_respuesta_ids (id_evaluacion_respuesta) VALUES ',
+                      REPLACE(REPLACE(p_respuesta_ids, ',', '),('), '(', '(('), ')', '))'));
+    PREPARE stmt FROM @sql;
+    EXECUTE stmt;
+    DEALLOCATE PREPARE stmt;
+
+    -- Calcular estadísticas agregadas
+    SELECT
+        -- Distribución por label
+        COUNT(*) AS total_respuestas,
+        SUM(CASE WHEN er.label_evaluacion_respuesta = 'ANXIETY' THEN 1 ELSE 0 END) AS count_anxiety,
+        SUM(CASE WHEN er.label_evaluacion_respuesta = 'SUICIDAL' THEN 1 ELSE 0 END) AS count_suicidal,
+        SUM(CASE WHEN er.label_evaluacion_respuesta = 'ANGER' THEN 1 ELSE 0 END) AS count_anger,
+        SUM(CASE WHEN er.label_evaluacion_respuesta = 'SADNESS' THEN 1 ELSE 0 END) AS count_sadness,
+        SUM(CASE WHEN er.label_evaluacion_respuesta = 'FRUSTRATION' THEN 1 ELSE 0 END) AS count_frustration,
+
+        -- Confianza promedio
+        AVG(er.confidence_score) AS avg_confidence,
+        MIN(er.confidence_score) AS min_confidence,
+        MAX(er.confidence_score) AS max_confidence,
+
+        -- Sentimiento dominante (más frecuente)
+        (SELECT er2.label_evaluacion_respuesta
+         FROM evaluacion_respuesta er2
+         INNER JOIN temp_respuesta_ids t2 ON er2.id_evaluacion_respuesta = t2.id_evaluacion_respuesta
+         WHERE er2.label_evaluacion_respuesta IS NOT NULL
+         GROUP BY er2.label_evaluacion_respuesta
+         ORDER BY COUNT(*) DESC, er2.label_evaluacion_respuesta
+         LIMIT 1) AS dominant_sentiment,
+
+        -- Nivel de riesgo más alto
+        (SELECT er3.nivel_riesgo
+         FROM evaluacion_respuesta er3
+         INNER JOIN temp_respuesta_ids t3 ON er3.id_evaluacion_respuesta = t3.id_evaluacion_respuesta
+         WHERE er3.nivel_riesgo IS NOT NULL
+         ORDER BY
+             CASE er3.nivel_riesgo
+                 WHEN 'ALTO' THEN 3
+                 WHEN 'MEDIO' THEN 2
+                 WHEN 'BAJO' THEN 1
+                 ELSE 0
+             END DESC
+         LIMIT 1) AS highest_risk_level,
+
+        -- Alertas de alto riesgo
+        SUM(CASE
+            WHEN er.label_evaluacion_respuesta = 'SUICIDAL'
+                 AND er.confidence_score > 0.7
+            THEN 1
+            ELSE 0
+        END) AS high_risk_alerts,
+
+        -- Timestamp
+        NOW() AS calculated_at
+
+    FROM evaluacion_respuesta er
+    INNER JOIN temp_respuesta_ids t ON er.id_evaluacion_respuesta = t.id_evaluacion_respuesta
+    WHERE er.label_evaluacion_respuesta IS NOT NULL;
+
+    -- Limpiar tabla temporal
+    DROP TEMPORARY TABLE IF EXISTS temp_respuesta_ids;
+END$$
+
+
+-- ============================================================================
+-- Procedimiento 2: Distribución de Sentimientos por Evaluación
+-- ============================================================================
+-- Obtiene la distribución de sentimientos para una evaluación específica
+-- Útil para análisis de sesiones completas
+-- ============================================================================
+
+CREATE PROCEDURE sp_get_sentiment_distribution_by_evaluation(
+    IN p_id_evaluacion BIGINT
+)
+BEGIN
+    SELECT
+        e.id_evaluacion,
+        e.fecha_evaluacion,
+        p.nombre_paciente,
+        per.nombre_personal AS nombre_profesional,
+
+        -- Distribución de sentimientos
+        COUNT(er.id_evaluacion_respuesta) AS total_respuestas,
+        SUM(CASE WHEN er.label_evaluacion_respuesta = 'ANXIETY' THEN 1 ELSE 0 END) AS count_anxiety,
+        SUM(CASE WHEN er.label_evaluacion_respuesta = 'SUICIDAL' THEN 1 ELSE 0 END) AS count_suicidal,
+        SUM(CASE WHEN er.label_evaluacion_respuesta = 'ANGER' THEN 1 ELSE 0 END) AS count_anger,
+        SUM(CASE WHEN er.label_evaluacion_respuesta = 'SADNESS' THEN 1 ELSE 0 END) AS count_sadness,
+        SUM(CASE WHEN er.label_evaluacion_respuesta = 'FRUSTRATION' THEN 1 ELSE 0 END) AS count_frustration,
+
+        -- Estadísticas de confianza
+        AVG(er.confidence_score) AS avg_confidence,
+
+        -- Sentimiento dominante
+        (SELECT er2.label_evaluacion_respuesta
+         FROM evaluacion_respuesta er2
+         INNER JOIN evaluacion_pregunta ep2 ON er2.id_evaluacion_pregunta = ep2.id_evaluacion_pregunta
+         WHERE ep2.id_evaluacion = p_id_evaluacion
+           AND er2.label_evaluacion_respuesta IS NOT NULL
+         GROUP BY er2.label_evaluacion_respuesta
+         ORDER BY COUNT(*) DESC
+         LIMIT 1) AS dominant_sentiment,
+
+        -- Alertas
+        SUM(CASE
+            WHEN er.label_evaluacion_respuesta = 'SUICIDAL'
+                 AND er.confidence_score > 0.7
+            THEN 1
+            ELSE 0
+        END) AS high_risk_alerts
+
+    FROM evaluacion e
+    INNER JOIN evaluacion_pregunta ep ON e.id_evaluacion = ep.id_evaluacion
+    LEFT JOIN evaluacion_respuesta er ON ep.id_evaluacion_pregunta = er.id_evaluacion_pregunta
+    INNER JOIN consulta c ON e.id_consulta = c.id_consulta
+    INNER JOIN paciente p ON c.id_paciente = p.id_paciente
+    INNER JOIN personal per ON c.id_personal = per.id_personal
+    WHERE e.id_evaluacion = p_id_evaluacion
+    GROUP BY e.id_evaluacion, e.fecha_evaluacion, p.nombre_paciente, per.nombre_personal;
+END$$
+
+
+-- ============================================================================
+-- Procedimiento 3: Alertas de Alto Riesgo
+-- ============================================================================
+-- Obtiene respuestas con indicadores de alto riesgo (SUICIDAL con alta confianza)
+-- Incluye información del paciente y contexto
+-- ============================================================================
+
+CREATE PROCEDURE sp_get_high_risk_alerts(
+    IN p_days_back INT  -- Días hacia atrás (ej: 7 para última semana)
+)
+BEGIN
+    SELECT
+        er.id_evaluacion_respuesta,
+        er.texto_evaluacion_respuesta,
+        er.label_evaluacion_respuesta,
+        er.confidence_score,
+        er.nivel_riesgo,
+        er.created_at AS fecha_respuesta,
+
+        -- Información del paciente
+        p.id_paciente,
+        p.nombre_paciente,
+        p.telefono_paciente,
+        p.email_paciente,
+
+        -- Información de la consulta
+        c.id_consulta,
+        c.fechahora_consulta,
+
+        -- Información del profesional
+        per.id_personal,
+        per.nombre_personal,
+        per.email_personal,
+
+        -- Información de la evaluación
+        e.id_evaluacion,
+        e.titulo_evaluacion,
+        e.fecha_evaluacion,
+
+        -- Pregunta relacionada
+        ep.texto_pregunta
+
+    FROM evaluacion_respuesta er
+    INNER JOIN evaluacion_pregunta ep ON er.id_evaluacion_pregunta = ep.id_evaluacion_pregunta
+    INNER JOIN evaluacion e ON ep.id_evaluacion = e.id_evaluacion
+    INNER JOIN consulta c ON e.id_consulta = c.id_consulta
+    INNER JOIN paciente p ON c.id_paciente = p.id_paciente
+    INNER JOIN personal per ON c.id_personal = per.id_personal
+
+    WHERE er.label_evaluacion_respuesta = 'SUICIDAL'
+      AND er.confidence_score > 0.7
+      AND er.created_at >= DATE_SUB(NOW(), INTERVAL p_days_back DAY)
+
+    ORDER BY er.confidence_score DESC, er.created_at DESC;
+END$$
+
+DELIMITER ;
+
+-- ============================================================================
+-- Índices adicionales para optimizar stored procedures
+-- ============================================================================
+
+-- Índice para búsquedas por label y confidence (usado en alertas)
+CREATE INDEX IF NOT EXISTS idx_evaluacion_respuesta_label_confidence
+ON evaluacion_respuesta(label_evaluacion_respuesta, confidence_score);
+
+-- Índice para búsquedas por fecha de creación (usado en alertas temporales)
+CREATE INDEX IF NOT EXISTS idx_evaluacion_respuesta_created_at
+ON evaluacion_respuesta(created_at);
+
+-- Índice compuesto para queries de análisis agregado
+CREATE INDEX IF NOT EXISTS idx_evaluacion_respuesta_label_riesgo
+ON evaluacion_respuesta(label_evaluacion_respuesta, nivel_riesgo);
+
+-- ============================================================================
+-- Fin del script
+-- ============================================================================
+
+
+
+DELIMITER ;

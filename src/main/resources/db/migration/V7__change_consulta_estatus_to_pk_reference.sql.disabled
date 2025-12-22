@@ -1,0 +1,156 @@
+-- ============================================================================
+-- ALTER MIGRATION: Change consulta.estatus_consulta to use PK reference
+-- ============================================================================
+-- Version: V7
+-- Date: 2025-12-21
+-- Description: Changes consulta.estatus_consulta from VARCHAR to INT
+--              and updates FK to reference consulta_estatus.id_consulta_estatus (PK)
+--              instead of nombre_consulta_estatus (unique field)
+--              Implements N:1 relationship (many consultations share same status)
+--
+-- ⚠️ IMPORTANT: This migration supersedes V6. Run V7 instead of V6 on new databases.
+-- ============================================================================
+
+-- ----------------------------------------------------------------------------
+-- Step 1: Add new INT column for status ID
+-- ----------------------------------------------------------------------------
+
+-- Add the new column (nullable initially to allow data migration)
+ALTER TABLE consulta
+ADD COLUMN estatus_consulta_id INT NULL
+COMMENT 'N:1 FK to consulta_estatus.id_consulta_estatus'
+AFTER estatus_consulta;
+
+-- ----------------------------------------------------------------------------
+-- Step 2: Migrate data from VARCHAR status names to INT status IDs
+-- ----------------------------------------------------------------------------
+
+-- Update the new INT column with corresponding IDs from consulta_estatus
+-- This maps status names to their IDs
+UPDATE consulta c
+INNER JOIN consulta_estatus ce ON c.estatus_consulta = ce.nombre_consulta_estatus
+SET c.estatus_consulta_id = ce.id_consulta_estatus;
+
+-- Check if any records couldn't be migrated (should return 0)
+SELECT COUNT(*) as unmigrated_records
+FROM consulta
+WHERE estatus_consulta_id IS NULL;
+
+-- If there are unmigrated records, set them to default status (PENDIENTE = ID 1)
+-- Assuming PENDIENTE has id_consulta_estatus = 1
+UPDATE consulta
+SET estatus_consulta_id = (SELECT id_consulta_estatus FROM consulta_estatus WHERE nombre_consulta_estatus = 'PENDIENTE' LIMIT 1)
+WHERE estatus_consulta_id IS NULL;
+
+-- ----------------------------------------------------------------------------
+-- Step 3: Drop old VARCHAR column and rename new INT column
+-- ----------------------------------------------------------------------------
+
+-- Drop the old VARCHAR column
+ALTER TABLE consulta
+DROP COLUMN estatus_consulta;
+
+-- Rename the new INT column to estatus_consulta
+ALTER TABLE consulta
+CHANGE COLUMN estatus_consulta_id estatus_consulta INT NOT NULL
+COMMENT 'N:1 FK to consulta_estatus.id_consulta_estatus';
+
+-- ----------------------------------------------------------------------------
+-- Step 4: Add foreign key constraint
+-- ----------------------------------------------------------------------------
+
+-- This creates an N:1 relationship: Many consultations can share the same status
+-- For example, multiple consultations can all have status ID = 1 (PENDIENTE)
+ALTER TABLE consulta
+ADD CONSTRAINT fk_consulta_estatus
+FOREIGN KEY (estatus_consulta)
+REFERENCES consulta_estatus(id_consulta_estatus)
+ON DELETE RESTRICT
+ON UPDATE CASCADE;
+
+-- ON DELETE RESTRICT: Cannot delete a status if consultations are using it
+-- ON UPDATE CASCADE: If status ID changes (rare), update all consultations
+
+-- ----------------------------------------------------------------------------
+-- Step 5: Verify constraint was added successfully
+-- ----------------------------------------------------------------------------
+
+-- This query should show the new FK constraint referencing id_consulta_estatus
+SELECT
+    CONSTRAINT_NAME,
+    TABLE_NAME,
+    COLUMN_NAME,
+    REFERENCED_TABLE_NAME,
+    REFERENCED_COLUMN_NAME
+FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
+WHERE TABLE_SCHEMA = DATABASE()
+  AND TABLE_NAME = 'consulta'
+  AND REFERENCED_TABLE_NAME = 'consulta_estatus';
+
+-- Expected result:
+-- CONSTRAINT_NAME: fk_consulta_estatus
+-- COLUMN_NAME: estatus_consulta
+-- REFERENCED_COLUMN_NAME: id_consulta_estatus
+
+-- ============================================================================
+-- END OF MIGRATION
+-- ============================================================================
+
+-- Migration Summary:
+-- ✅ Changed estatus_consulta from VARCHAR(50) to INT
+-- ✅ Migrated existing data: status names → status IDs
+-- ✅ Added NOT NULL constraint
+-- ✅ Added FK constraint: consulta.estatus_consulta -> consulta_estatus.id_consulta_estatus (PK)
+-- ✅ ON DELETE RESTRICT: Protects status catalog from deletion
+-- ✅ ON UPDATE CASCADE: Keeps data synchronized
+
+-- Benefits of Using PK Reference:
+-- ✅ Better performance (INT comparison faster than VARCHAR)
+-- ✅ Smaller storage (4 bytes vs 50 bytes per record)
+-- ✅ Standard database design pattern (FK should reference PK)
+-- ✅ Stable references (IDs don't change, names might)
+-- ✅ No issues with character encoding or case sensitivity
+
+-- Usage Notes:
+-- 1. To get status name, JOIN with consulta_estatus:
+--    SELECT c.*, ce.nombre_consulta_estatus
+--    FROM consulta c
+--    JOIN consulta_estatus ce ON c.estatus_consulta = ce.id_consulta_estatus;
+--
+-- 2. Use status IDs in application code:
+--    - 1 = PENDIENTE
+--    - 2 = EN_PROGRESO
+--    - 3 = COMPLETADA
+--    - 4 = CANCELADA
+--    - 5 = REPROGRAMADA
+--    - 6 = NO_ASISTIO
+--
+-- 3. Cannot delete a status if any consultation uses it
+-- 4. Status IDs are stable and won't change
+
+-- Testing:
+-- Try to insert with valid status ID (should succeed):
+--   INSERT INTO consulta (id_paciente, id_personal, fechahora_consulta, estatus_consulta)
+--   VALUES (1, 1, NOW(), 1);
+
+-- Try to insert with invalid status ID (should fail):
+--   INSERT INTO consulta (id_paciente, id_personal, fechahora_consulta, estatus_consulta)
+--   VALUES (1, 1, NOW(), 999);
+--   -- Error: Cannot add or update a child row: foreign key constraint fails
+
+-- Try to delete used status (should fail):
+--   DELETE FROM consulta_estatus WHERE id_consulta_estatus = 1;
+--   -- Error: Cannot delete or update a parent row: foreign key constraint fails
+
+-- Query consultations with status names:
+--   SELECT
+--       c.id_consulta,
+--       p.nombre_paciente,
+--       per.nombre_personal,
+--       ce.nombre_consulta_estatus as estatus,
+--       c.fechahora_consulta
+--   FROM consulta c
+--   INNER JOIN consulta_estatus ce ON c.estatus_consulta = ce.id_consulta_estatus
+--   INNER JOIN paciente p ON c.id_paciente = p.id_paciente
+--   INNER JOIN personal per ON c.id_personal = per.id_personal;
+

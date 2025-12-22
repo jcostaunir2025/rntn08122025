@@ -1,0 +1,18 @@
+spring:
+  datasource:
+    url: jdbc:mysql://${DB_HOST}:${DB_PORT}/${DB_NAME}?useSSL=true&requireSSL=true
+    hikari:
+      maximum-pool-size: 20
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+  flyway:
+    clean-disabled: true
+
+logging:
+  level:
+    com.example.rntn: INFO
+    edu.stanford.nlp: WARN
+    org.hibernate: WARN
+
