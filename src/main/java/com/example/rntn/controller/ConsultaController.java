@@ -15,6 +15,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -30,6 +31,7 @@ public class ConsultaController {
     private final ConsultaService consultaService;
 
     @PostMapping
+    @PreAuthorize("hasPermission(null, 'consulta:create')")
     @Operation(summary = "Crear nueva consulta", description = "Registra una nueva consulta médica")
     public ResponseEntity<ConsultaResponse> crearConsulta(@Valid @RequestBody ConsultaRequest request) {
         log.info("POST /api/v1/consultas - Paciente: {}, Personal: {}",
@@ -40,6 +42,7 @@ public class ConsultaController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasPermission(null, 'consulta:read')")
     @Operation(summary = "Obtener consulta por ID")
     public ResponseEntity<ConsultaResponse> obtenerConsulta(@PathVariable Integer id) {
         log.info("GET /api/v1/consultas/{}", id);
@@ -48,6 +51,7 @@ public class ConsultaController {
     }
 
     @GetMapping("/paciente/{idPaciente}")
+    @PreAuthorize("hasPermission(null, 'consulta:read')")
     @Operation(summary = "Obtener consultas por paciente",
                description = "Lista todas las consultas de un paciente con filtros de fecha opcionales")
     public ResponseEntity<Page<ConsultaResponse>> listarConsultasPorPaciente(
@@ -68,6 +72,7 @@ public class ConsultaController {
     }
 
     @GetMapping("/personal/{idPersonal}")
+    @PreAuthorize("hasPermission(null, 'consulta:read')")
     @Operation(summary = "Obtener consultas por personal médico")
     public ResponseEntity<Page<ConsultaResponse>> listarConsultasPorPersonal(
             @PathVariable Integer idPersonal,
@@ -80,6 +85,7 @@ public class ConsultaController {
     }
 
     @PatchMapping("/{id}/estado")
+    @PreAuthorize("hasPermission(null, 'consulta:update')")
     @Operation(summary = "Actualizar estado de consulta",
                description = "Actualiza el estado de la consulta. IDs válidos: 1=PENDIENTE, 2=EN_PROGRESO, 3=COMPLETADA, 4=CANCELADA, 5=REPROGRAMADA, 6=NO_ASISTIO")
     public ResponseEntity<ConsultaResponse> actualizarEstado(
@@ -94,6 +100,7 @@ public class ConsultaController {
     }
 
     @PostMapping("/{id}/finalizar")
+    @PreAuthorize("hasPermission(null, 'consulta:update')")
     @Operation(summary = "Finalizar consulta", description = "Marca la consulta como completada")
     public ResponseEntity<ConsultaResponse> finalizarConsulta(
             @PathVariable Integer id,

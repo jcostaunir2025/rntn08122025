@@ -14,6 +14,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -29,6 +30,7 @@ public class ReporteController {
     private final ReporteService reporteService;
 
     @PostMapping
+    @PreAuthorize("hasPermission(null, 'reporte:create')")
     @Operation(summary = "Generar nuevo reporte",
                description = "Genera un nuevo reporte basado en una evaluación")
     public ResponseEntity<ReporteResponse> generarReporte(@Valid @RequestBody ReporteRequest request) {
@@ -38,6 +40,7 @@ public class ReporteController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasPermission(null, 'reporte:read')")
     @Operation(summary = "Obtener reporte por ID")
     public ResponseEntity<ReporteResponse> obtenerReporte(@PathVariable Integer id) {
         log.info("GET /api/v1/reportes/{}", id);
@@ -46,6 +49,7 @@ public class ReporteController {
     }
 
     @GetMapping
+    @PreAuthorize("hasPermission(null, 'reporte:read')")
     @Operation(summary = "Listar todos los reportes")
     public ResponseEntity<Page<ReporteResponse>> listarReportes(
             @PageableDefault(size = 20) Pageable pageable) {
@@ -56,6 +60,7 @@ public class ReporteController {
     }
 
     @GetMapping("/usuario/{idUsuario}")
+    @PreAuthorize("hasPermission(null, 'reporte:read')")
     @Operation(summary = "Listar reportes por usuario",
                description = "Lista todos los reportes generados por un usuario específico")
     public ResponseEntity<Page<ReporteResponse>> listarReportesPorUsuario(
@@ -69,6 +74,7 @@ public class ReporteController {
     }
 
     @GetMapping("/evaluacion/{idEvaluacion}")
+    @PreAuthorize("hasPermission(null, 'reporte:read')")
     @Operation(summary = "Listar reportes por evaluación",
                description = "Lista todos los reportes asociados a una evaluación específica")
     public ResponseEntity<Page<ReporteResponse>> listarReportesPorEvaluacion(
@@ -82,6 +88,7 @@ public class ReporteController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasPermission(null, 'reporte:create')")
     @Operation(summary = "Actualizar reporte")
     public ResponseEntity<ReporteResponse> actualizarReporte(
             @PathVariable Integer id,
@@ -93,6 +100,7 @@ public class ReporteController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasPermission(null, 'reporte:delete')")
     @Operation(summary = "Eliminar reporte")
     public ResponseEntity<Void> eliminarReporte(@PathVariable Integer id) {
         log.info("DELETE /api/v1/reportes/{}", id);

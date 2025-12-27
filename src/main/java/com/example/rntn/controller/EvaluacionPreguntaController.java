@@ -13,6 +13,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -30,6 +31,7 @@ public class EvaluacionPreguntaController {
     private final EvaluacionPreguntaService preguntaService;
 
     @PostMapping
+    @PreAuthorize("hasPermission(null, 'evaluacion_pregunta:create')")
     @Operation(summary = "Crear nueva pregunta", description = "Crea una nueva pregunta de evaluación")
     public ResponseEntity<EvaluacionPreguntaResponse> crearPregunta(
             @Valid @RequestBody EvaluacionPreguntaRequest request) {
@@ -40,6 +42,7 @@ public class EvaluacionPreguntaController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasPermission(null, 'evaluacion_pregunta:read')")
     @Operation(summary = "Obtener pregunta por ID")
     public ResponseEntity<EvaluacionPreguntaResponse> obtenerPregunta(@PathVariable Integer id) {
         log.info("GET /api/v1/preguntas/{}", id);
@@ -48,6 +51,7 @@ public class EvaluacionPreguntaController {
     }
 
     @GetMapping
+    @PreAuthorize("hasPermission(null, 'evaluacion_pregunta:read')")
     @Operation(summary = "Listar preguntas", description = "Lista todas las preguntas de evaluación")
     public ResponseEntity<Page<EvaluacionPreguntaResponse>> listarPreguntas(
             @PageableDefault(size = 20) Pageable pageable) {
@@ -58,6 +62,7 @@ public class EvaluacionPreguntaController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasPermission(null, 'evaluacion_pregunta:update')")
     @Operation(summary = "Actualizar pregunta")
     public ResponseEntity<EvaluacionPreguntaResponse> actualizarPregunta(
             @PathVariable Integer id,
@@ -69,6 +74,7 @@ public class EvaluacionPreguntaController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasPermission(null, 'evaluacion_pregunta:delete')")
     @Operation(summary = "Eliminar pregunta")
     public ResponseEntity<Void> eliminarPregunta(@PathVariable Integer id) {
         log.info("DELETE /api/v1/preguntas/{}", id);

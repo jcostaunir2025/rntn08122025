@@ -14,6 +14,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -32,6 +33,7 @@ public class UsuarioController {
     private final UsuarioService usuarioService;
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Crear nuevo usuario", description = "Registra un nuevo usuario con roles asignados")
     public ResponseEntity<UsuarioResponse> crearUsuario(@Valid @RequestBody UsuarioRequest request) {
         log.info("POST /api/v1/usuarios - Usuario: {}", request.getNombreUsuario());
@@ -40,6 +42,7 @@ public class UsuarioController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Obtener usuario por ID")
     public ResponseEntity<UsuarioResponse> obtenerUsuario(@PathVariable Integer id) {
         log.info("GET /api/v1/usuarios/{}", id);
@@ -48,6 +51,7 @@ public class UsuarioController {
     }
 
     @GetMapping("/nombre/{nombreUsuario}")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Obtener usuario por nombre")
     public ResponseEntity<UsuarioResponse> obtenerPorNombre(
             @Parameter(description = "Nombre de usuario", required = true)
@@ -59,6 +63,7 @@ public class UsuarioController {
     }
 
     @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Listar usuarios")
     public ResponseEntity<Page<UsuarioResponse>> listarUsuarios(
             @PageableDefault(size = 20) Pageable pageable) {
@@ -69,6 +74,7 @@ public class UsuarioController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Actualizar usuario")
     public ResponseEntity<UsuarioResponse> actualizarUsuario(
             @PathVariable Integer id,
@@ -80,6 +86,7 @@ public class UsuarioController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Eliminar usuario")
     public ResponseEntity<Void> eliminarUsuario(@PathVariable Integer id) {
         log.info("DELETE /api/v1/usuarios/{}", id);
@@ -91,6 +98,7 @@ public class UsuarioController {
      * Listar todos los roles disponibles
      */
     @GetMapping("/roles")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Listar roles disponibles",
             description = "Retorna todos los roles del sistema (ADMIN, DOCTOR, ENFERMERO, etc.)")
     public ResponseEntity<List<Map<String, Object>>> listarRoles() {

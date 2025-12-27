@@ -55,6 +55,9 @@ CREATE TABLE usuario_roles (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 COMMENT='System roles catalog';
 
+/*insert into rntn_sentiment_db.usuario_roles(permisos_roles) values('ADMIN');
+insert into rntn_sentiment_db.usuario_roles(permisos_roles) values('PROFESIONAL');
+insert into rntn_sentiment_db.usuario_roles(permisos_roles) values('INVITADO');*/
 -- ----------------------------------------------------------------------------
 -- Table: usuario_roles_mapping
 -- Description: Many-to-many relationship between users and roles

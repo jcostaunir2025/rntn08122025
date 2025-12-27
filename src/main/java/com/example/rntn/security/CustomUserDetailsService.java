@@ -13,7 +13,8 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.Collection;
-import java.util.stream.Collectors;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Servicio para cargar detalles de usuario desde la base de datos
@@ -45,12 +46,25 @@ public class CustomUserDetailsService implements UserDetailsService {
     }
 
     /**
-     * Convierte los roles del usuario en authorities de Spring Security
+     * Convierte los roles y permisos del usuario en authorities de Spring Security
+     * Cada rol se convierte en ROLE_{nombre}
+     * Cada permiso se agrega directamente como authority
      */
     private Collection<? extends GrantedAuthority> getAuthorities(Usuario usuario) {
-        return usuario.getRoles().stream()
-                .map(rol -> new SimpleGrantedAuthority("ROLE_" + rol.getPermisosRoles()))
-                .collect(Collectors.toList());
+        Set<GrantedAuthority> authorities = new HashSet<>();
+
+        // Add roles as ROLE_xxx
+        usuario.getRoles().forEach(rol -> {
+            authorities.add(new SimpleGrantedAuthority("ROLE_" + rol.getPermisosRoles()));
+
+            // Add each permission from the role
+            rol.getPermissions().forEach(permission -> {
+                authorities.add(new SimpleGrantedAuthority(permission.getPermissionName()));
+            });
+        });
+
+        log.debug("Usuario {} tiene {} authorities", usuario.getNombreUsuario(), authorities.size());
+        return authorities;
     }
 }
 

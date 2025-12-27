@@ -19,6 +19,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -44,6 +45,7 @@ public class SentimentController {
      * Predice el sentimiento de un texto individual
      */
     @PostMapping("/predict")
+    @PreAuthorize("hasPermission(null, 'sentiment:analyze')")
     @Operation(
         summary = "Predecir sentimiento de texto individual",
         description = "Analiza el sentimiento de un texto único usando el modelo RNTN. " +
@@ -76,6 +78,7 @@ public class SentimentController {
      * Predice el sentimiento de múltiples textos (batch)
      */
     @PostMapping("/predict/batch")
+    @PreAuthorize("hasPermission(null, 'sentiment:analyze_batch')")
     @Operation(
         summary = "Predecir sentimiento de múltiples textos",
         description = "Analiza el sentimiento de múltiples textos en una sola petición. " +
@@ -114,6 +117,7 @@ public class SentimentController {
      * Obtiene la lista de labels de sentimiento soportados
      */
     @GetMapping("/labels")
+    @PreAuthorize("hasPermission(null, 'sentiment:analyze')")
     @Operation(
         summary = "Obtener labels de sentimiento",
         description = "Retorna la lista de las 5 clases de sentimiento que el modelo puede predecir, " +
@@ -151,6 +155,7 @@ public class SentimentController {
      * Obtiene estadísticas del modelo
      */
     @GetMapping("/model/stats")
+    @PreAuthorize("hasPermission(null, 'sentiment:analyze')")
     @Operation(
         summary = "Obtener estadísticas del modelo",
         description = "Retorna información sobre el modelo RNTN cargado, incluyendo su ubicación, " +
@@ -176,6 +181,7 @@ public class SentimentController {
      * Combina predicción individual + estadísticas agregadas
      */
     @PostMapping("/predict/batch/aggregate")
+    @PreAuthorize("hasPermission(null, 'sentiment:aggregate')")
     @Operation(
         summary = "Predecir sentimiento por lote con análisis agregado",
         description = "Analiza múltiples textos y retorna tanto los resultados individuales como " +
@@ -225,6 +231,7 @@ public class SentimentController {
      * Usa stored procedure para cálculo optimizado
      */
     @PostMapping("/aggregate/stats")
+    @PreAuthorize("hasPermission(null, 'sentiment:aggregate')")
     @Operation(
         summary = "Calcular estadísticas agregadas desde BD",
         description = "Calcula estadísticas agregadas para un conjunto de respuestas ya almacenadas " +
@@ -253,6 +260,7 @@ public class SentimentController {
      * Usa stored procedure para análisis de sesión completa
      */
     @GetMapping("/aggregate/evaluation/{idEvaluacion}")
+    @PreAuthorize("hasPermission(null, 'sentiment:aggregate')")
     @Operation(
         summary = "Obtener distribución de sentimientos por evaluación",
         description = "Obtiene la distribución de sentimientos para todas las respuestas de una evaluación. " +
@@ -282,6 +290,7 @@ public class SentimentController {
      * Detecta respuestas SUICIDAL con alta confianza
      */
     @GetMapping("/alerts/high-risk")
+    @PreAuthorize("hasPermission(null, 'sentiment:aggregate')")
     @Operation(
         summary = "Obtener alertas de alto riesgo",
         description = "Obtiene todas las respuestas con indicadores de alto riesgo (SUICIDAL con confianza > 0.7) " +

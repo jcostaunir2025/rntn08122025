@@ -18,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -41,6 +42,7 @@ public class EvaluacionController {
      * ⭐ ENDPOINT PRINCIPAL - Registra una respuesta con análisis de sentimiento
      */
     @PostMapping("/respuestas")
+    @PreAuthorize("hasPermission(null, 'evaluacion_respuesta:create')")
     @Operation(
         summary = "Registrar respuesta con análisis de sentimiento",
         description = "Registra una respuesta de evaluación y automáticamente analiza el sentimiento usando el modelo RNTN. " +
@@ -91,6 +93,7 @@ public class EvaluacionController {
      * Listar todas las respuestas con paginación
      */
     @GetMapping("/respuestas")
+    @PreAuthorize("hasPermission(null, 'evaluacion_respuesta:read')")
     @Operation(
         summary = "Listar todas las respuestas",
         description = "Retorna una lista paginada de todas las respuestas de evaluación con sus análisis"
@@ -108,6 +111,7 @@ public class EvaluacionController {
      * Obtener una respuesta específica por ID
      */
     @GetMapping("/respuestas/{id}")
+    @PreAuthorize("hasPermission(null, 'evaluacion_respuesta:read')")
     @Operation(
         summary = "Obtener respuesta por ID",
         description = "Retorna una respuesta de evaluación específica con su análisis de sentimiento"
@@ -123,6 +127,7 @@ public class EvaluacionController {
      * Buscar respuestas por label de sentimiento
      */
     @GetMapping("/respuestas/label/{label}")
+    @PreAuthorize("hasPermission(null, 'evaluacion_respuesta:read')")
     @Operation(
         summary = "Buscar respuestas por label",
         description = "Filtra respuestas por label de sentimiento (ANXIETY, SUICIDAL, ANGER, SADNESS, FRUSTRATION)"
@@ -138,6 +143,7 @@ public class EvaluacionController {
      * Obtener respuestas de alto riesgo
      */
     @GetMapping("/respuestas/alto-riesgo")
+    @PreAuthorize("hasPermission(null, 'evaluacion_respuesta:read')")
     @Operation(
         summary = "Obtener respuestas de alto riesgo",
         description = "Retorna respuestas con label SUICIDAL y alta confianza"
@@ -155,6 +161,7 @@ public class EvaluacionController {
      * Actualizar una respuesta existente
      */
     @PutMapping("/respuestas/{id}")
+    @PreAuthorize("hasPermission(null, 'evaluacion_respuesta:update')")
     @Operation(
         summary = "Actualizar respuesta",
         description = "Actualiza el texto de una respuesta y recalcula el análisis de sentimiento"
@@ -173,6 +180,7 @@ public class EvaluacionController {
      * Eliminar una respuesta
      */
     @DeleteMapping("/respuestas/{id}")
+    @PreAuthorize("hasPermission(null, 'evaluacion_respuesta:delete')")
     @Operation(summary = "Eliminar respuesta")
     public ResponseEntity<Void> eliminarRespuesta(@PathVariable Integer id) {
         log.info("DELETE /api/v1/evaluaciones/respuestas/{}", id);
@@ -184,6 +192,7 @@ public class EvaluacionController {
      * Obtiene análisis agregado de múltiples preguntas
      */
     @GetMapping("/analisis-agregado")
+    @PreAuthorize("hasPermission(null, 'evaluacion_respuesta:read')")
     @Operation(
         summary = "Obtener análisis agregado",
         description = "Retorna estadísticas agregadas de sentimientos para un conjunto de preguntas. " +
@@ -210,6 +219,7 @@ public class EvaluacionController {
      * CRUD para Evaluacion
      */
     @PostMapping
+    @PreAuthorize("hasPermission(null, 'evaluacion:create')")
     @Operation(
         summary = "Crear evaluación",
         description = "Registra una nueva evaluación psicológica"
@@ -228,6 +238,7 @@ public class EvaluacionController {
      * Obtener una evaluación por ID
      */
     @GetMapping("/{id}")
+    @PreAuthorize("hasPermission(null, 'evaluacion:read')")
     @Operation(
         summary = "Obtener evaluación por ID",
         description = "Retorna los detalles de una evaluación psicológica por su ID"
@@ -242,6 +253,7 @@ public class EvaluacionController {
      * Actualizar una evaluación existente
      */
     @PutMapping("/{id}")
+    @PreAuthorize("hasPermission(null, 'evaluacion:update')")
     @Operation(
         summary = "Actualizar evaluación",
         description = "Actualiza los detalles de una evaluación psicológica"
@@ -259,6 +271,7 @@ public class EvaluacionController {
      * Eliminar una evaluación
      */
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasPermission(null, 'evaluacion:delete')")
     @Operation(summary = "Eliminar evaluación")
     public ResponseEntity<Void> eliminarEvaluacion(@PathVariable Integer id) {
         log.info("DELETE /api/v1/evaluaciones/{}", id);

@@ -14,6 +14,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -26,6 +27,7 @@ public class PersonalController {
     private final PersonalService personalService;
 
     @PostMapping
+    @PreAuthorize("hasPermission(null, 'personal:create')")
     @Operation(summary = "Crear nuevo personal médico")
     public ResponseEntity<PersonalResponse> crearPersonal(@Valid @RequestBody PersonalRequest request) {
         log.info("POST /api/v1/personal - Doc: {}", request.getDocPersonal());
@@ -34,6 +36,7 @@ public class PersonalController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasPermission(null, 'personal:read')")
     @Operation(summary = "Obtener personal por ID")
     public ResponseEntity<PersonalResponse> obtenerPersonal(@PathVariable Integer id) {
         log.info("GET /api/v1/personal/{}", id);
@@ -42,6 +45,7 @@ public class PersonalController {
     }
 
     @GetMapping
+    @PreAuthorize("hasPermission(null, 'personal:read')")
     @Operation(summary = "Listar personal médico")
     public ResponseEntity<Page<PersonalResponse>> listarPersonal(
             @Parameter(description = "Filtrar por estatus")
@@ -54,6 +58,7 @@ public class PersonalController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasPermission(null, 'personal:update')")
     @Operation(summary = "Actualizar personal")
     public ResponseEntity<PersonalResponse> actualizarPersonal(
             @PathVariable Integer id,
@@ -65,6 +70,7 @@ public class PersonalController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasPermission(null, 'personal:delete')")
     @Operation(summary = "Eliminar personal")
     public ResponseEntity<Void> eliminarPersonal(@PathVariable Integer id) {
         log.info("DELETE /api/v1/personal/{}", id);

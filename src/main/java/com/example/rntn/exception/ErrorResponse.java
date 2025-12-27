@@ -1,34 +1,51 @@
 package com.example.rntn.exception;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.Map;
 
 /**
- * DTO para respuestas de error estandarizadas
+ * Standard error response structure for all API errors
  */
-@Data
+@Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ErrorResponse {
 
-    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    /**
+     * Timestamp when the error occurred
+     */
     private LocalDateTime timestamp;
 
-    private Integer status;
+    /**
+     * HTTP status code (e.g., 400, 403, 404, 500)
+     */
+    private int status;
 
+    /**
+     * Short error title (e.g., "Validation Failed", "Access Denied")
+     */
     private String error;
 
+    /**
+     * Detailed error message explaining what went wrong
+     */
     private String message;
 
-    private Map<String, String> validationErrors;
+    /**
+     * Additional details about the error (optional)
+     * Can include field-level validation errors, suggestions, etc.
+     */
+    private Map<String, Object> details;
+
+    /**
+     * Request path that caused the error
+     */
+    private String path;
 }
 

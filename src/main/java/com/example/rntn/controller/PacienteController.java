@@ -18,6 +18,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -33,6 +34,7 @@ public class PacienteController {
     private final PacienteService pacienteService;
 
     @PostMapping
+    @PreAuthorize("hasPermission(null, 'paciente:create')")
     @Operation(
         summary = "Crear nuevo paciente",
         description = "Registra un nuevo paciente en el sistema"
@@ -57,6 +59,7 @@ public class PacienteController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasPermission(null, 'paciente:read')")
     @Operation(
         summary = "Obtener paciente por ID",
         description = "Retorna la información de un paciente específico"
@@ -81,6 +84,7 @@ public class PacienteController {
     }
 
     @GetMapping
+    @PreAuthorize("hasPermission(null, 'paciente:read')")
     @Operation(
         summary = "Listar pacientes",
         description = "Retorna una lista paginada de pacientes con filtros opcionales"
@@ -107,6 +111,7 @@ public class PacienteController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasPermission(null, 'paciente:update')")
     @Operation(
         summary = "Actualizar paciente",
         description = "Actualiza la información de un paciente existente"
@@ -133,6 +138,7 @@ public class PacienteController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasPermission(null, 'paciente:delete')")
     @Operation(
         summary = "Eliminar paciente",
         description = "Desactiva un paciente (soft delete)"
