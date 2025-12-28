@@ -5,6 +5,7 @@ import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -44,6 +45,18 @@ public class Paciente {
 
     @Column(name = "telefono_paciente", length = 20)
     private String telefonoPaciente;
+
+    @Column(name = "fecha_paciente")
+    private LocalDate fechaPaciente;
+
+    @Column(name = "genero_paciente", length = 20)
+    private String generoPaciente;
+
+    @Column(name = "contacto_paciente", length = 100)
+    private String contactoPaciente;
+
+    @Column(name = "telefono_contacto_paciente", length = 20)
+    private String telefonoContactoPaciente;
 
     @Column(name = "estatus_paciente", length = 20)
     @Builder.Default

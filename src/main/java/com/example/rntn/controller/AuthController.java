@@ -2,6 +2,10 @@ package com.example.rntn.controller;
 
 import com.example.rntn.dto.request.LoginRequest;
 import com.example.rntn.dto.response.AuthResponse;
+import com.example.rntn.entity.Permission;
+import com.example.rntn.entity.Usuario;
+import com.example.rntn.entity.UsuarioRoles;
+import com.example.rntn.repository.UsuarioRepository;
 import com.example.rntn.security.JwtUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -17,7 +21,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
@@ -36,6 +39,7 @@ public class AuthController {
 
     private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
+    private final UsuarioRepository usuarioRepository;
 
     @Value("${jwt.expiration}")
     private Long jwtExpiration;
@@ -71,9 +75,23 @@ public class AuthController {
         // Generar token JWT
         String token = jwtUtil.generateToken(userDetails);
 
-        // Extraer roles
-        List<String> roles = userDetails.getAuthorities().stream()
-                .map(GrantedAuthority::getAuthority)
+        // Obtener usuario de la base de datos con roles y permisos
+        Usuario usuario = usuarioRepository.findByNombreUsuarioWithRoles(request.getUsername())
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        // Extraer roles (sin el prefijo "ROLE_")
+        List<String> roles = usuario.getRoles().stream()
+                .map(UsuarioRoles::getPermisosRoles)
+                .distinct()
+                .sorted()
+                .collect(Collectors.toList());
+
+        // Extraer permisos de todos los roles
+        List<String> permissions = usuario.getRoles().stream()
+                .flatMap(rol -> rol.getPermissions().stream())
+                .map(Permission::getPermissionName)
+                .distinct()
+                .sorted()
                 .collect(Collectors.toList());
 
         AuthResponse response = AuthResponse.builder()
@@ -81,10 +99,12 @@ public class AuthController {
                 .type("Bearer")
                 .username(userDetails.getUsername())
                 .roles(roles)
+                .permissions(permissions)
                 .expiresIn(jwtExpiration)
                 .build();
 
-        log.info("Login exitoso para usuario: {}", request.getUsername());
+        log.info("Login exitoso para usuario: {} - Roles: {} - Permisos: {}",
+                request.getUsername(), roles.size(), permissions.size());
 
         return ResponseEntity.ok(response);
     }

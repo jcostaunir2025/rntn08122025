@@ -40,6 +40,10 @@ public class PacienteService {
             .direccionPaciente(request.getDireccionPaciente())
             .emailPaciente(request.getEmailPaciente())
             .telefonoPaciente(request.getTelefonoPaciente())
+            .fechaPaciente(request.getFechaPaciente())
+            .generoPaciente(request.getGeneroPaciente())
+            .contactoPaciente(request.getContactoPaciente())
+            .telefonoContactoPaciente(request.getTelefonoContactoPaciente())
             .estatusPaciente(request.getEstatusPaciente())
             .build();
 
@@ -98,6 +102,10 @@ public class PacienteService {
         paciente.setDireccionPaciente(request.getDireccionPaciente());
         paciente.setEmailPaciente(request.getEmailPaciente());
         paciente.setTelefonoPaciente(request.getTelefonoPaciente());
+        paciente.setFechaPaciente(request.getFechaPaciente());
+        paciente.setGeneroPaciente(request.getGeneroPaciente());
+        paciente.setContactoPaciente(request.getContactoPaciente());
+        paciente.setTelefonoContactoPaciente(request.getTelefonoContactoPaciente());
         paciente.setEstatusPaciente(request.getEstatusPaciente());
 
         paciente = pacienteRepository.save(paciente);
@@ -129,6 +137,10 @@ public class PacienteService {
             .direccionPaciente(paciente.getDireccionPaciente())
             .emailPaciente(paciente.getEmailPaciente())
             .telefonoPaciente(paciente.getTelefonoPaciente())
+            .fechaPaciente(paciente.getFechaPaciente())
+            .generoPaciente(paciente.getGeneroPaciente())
+            .contactoPaciente(paciente.getContactoPaciente())
+            .telefonoContactoPaciente(paciente.getTelefonoContactoPaciente())
             .estatusPaciente(paciente.getEstatusPaciente())
             .createdAt(paciente.getCreatedAt())
             .updatedAt(paciente.getUpdatedAt())

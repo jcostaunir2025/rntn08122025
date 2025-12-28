@@ -28,8 +28,11 @@ public class AuthResponse {
     @Schema(description = "Nombre de usuario", example = "admin")
     private String username;
 
-    @Schema(description = "Roles del usuario", example = "[\"ROLE_ADMIN\"]")
+    @Schema(description = "Roles del usuario", example = "[\"ADMIN\", \"DOCTOR\"]")
     private List<String> roles;
+
+    @Schema(description = "Permisos del usuario", example = "[\"paciente:read\", \"paciente:create\", \"consulta:read\"]")
+    private List<String> permissions;
 
     @Schema(description = "Tiempo de expiración en milisegundos", example = "3600000")
     private Long expiresIn;

@@ -7,6 +7,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
@@ -36,6 +37,19 @@ public class PacienteResponse {
 
     @Schema(description = "Teléfono del paciente")
     private String telefonoPaciente;
+
+    @JsonFormat(pattern = "yyyy-MM-dd")
+    @Schema(description = "Fecha de nacimiento del paciente", example = "1990-05-15")
+    private LocalDate fechaPaciente;
+
+    @Schema(description = "Género del paciente", example = "MASCULINO")
+    private String generoPaciente;
+
+    @Schema(description = "Nombre del contacto de emergencia")
+    private String contactoPaciente;
+
+    @Schema(description = "Teléfono del contacto de emergencia")
+    private String telefonoContactoPaciente;
 
     @Schema(description = "Estado del paciente", example = "ACTIVO")
     private String estatusPaciente;

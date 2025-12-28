@@ -1,5 +1,7 @@
 package com.example.rntn.dto.request;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -9,6 +11,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.time.LocalDate;
 
 /**
  * DTO de request para crear/actualizar Paciente
@@ -43,6 +47,27 @@ public class PacienteRequest {
     @Size(max = 20, message = "El teléfono no puede exceder 20 caracteres")
     @Schema(description = "Teléfono del paciente", example = "+34 666 777 888")
     private String telefonoPaciente;
+
+    @JsonAlias({"fechanacPaciente", "fechaNacPaciente"})
+    @JsonFormat(pattern = "yyyy-MM-dd")
+    @Schema(description = "Fecha de nacimiento del paciente", example = "1990-05-15")
+    private LocalDate fechaPaciente;
+
+    @Pattern(regexp = "MASCULINO|FEMENINO|OTRO|NO_ESPECIFICA", message = "El género debe ser MASCULINO, FEMENINO, OTRO o NO_ESPECIFICA")
+    @Size(max = 20, message = "El género no puede exceder 20 caracteres")
+    @Schema(description = "Género del paciente", example = "MASCULINO", allowableValues = {"MASCULINO", "FEMENINO", "OTRO", "NO_ESPECIFICA"})
+    private String generoPaciente;
+
+    @JsonAlias({"contactoemergenciaPaciente", "contactoEmergenciaPaciente"})
+    @Size(max = 100, message = "El nombre del contacto no puede exceder 100 caracteres")
+    @Schema(description = "Nombre del contacto de emergencia", example = "María Pérez")
+    private String contactoPaciente;
+
+    @JsonAlias({"telefonoemergenciaPaciente", "telefonoEmergenciaPaciente"})
+    @Pattern(regexp = "^[0-9+\\-\\s()]*$", message = "El teléfono solo puede contener números y caracteres + - ( ) espacio")
+    @Size(max = 20, message = "El teléfono del contacto no puede exceder 20 caracteres")
+    @Schema(description = "Teléfono del contacto de emergencia", example = "+34 655 444 333")
+    private String telefonoContactoPaciente;
 
     @Pattern(regexp = "ACTIVO|INACTIVO|SUSPENDIDO", message = "El estatus debe ser ACTIVO, INACTIVO o SUSPENDIDO")
     @Schema(description = "Estado del paciente", example = "ACTIVO", allowableValues = {"ACTIVO", "INACTIVO", "SUSPENDIDO"})
