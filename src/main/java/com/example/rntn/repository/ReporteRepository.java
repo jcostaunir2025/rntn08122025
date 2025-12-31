@@ -41,10 +41,10 @@ public interface ReporteRepository extends JpaRepository<Reporte, Integer> {
 
     /**
      * Obtiene un reporte con todos sus detalles (JOIN FETCH)
+     * ⭐ UPDATED: Removed e.consulta join since relationship changed (evaluacion no longer has consulta)
      */
     @Query("SELECT r FROM Reporte r " +
            "JOIN FETCH r.evaluacion e " +
-           "JOIN FETCH e.consulta c " +
            "WHERE r.idReporte = :id")
     Reporte findByIdWithFullDetails(@Param("id") Integer id);
 }

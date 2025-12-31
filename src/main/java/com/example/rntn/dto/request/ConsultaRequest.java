@@ -25,6 +25,9 @@ public class ConsultaRequest {
     @Schema(description = "ID del personal médico", example = "1", required = true)
     private Integer idPersonal;
 
+    @Schema(description = "ID de la evaluación asociada (opcional, N:1 relationship)", example = "1")
+    private Integer idEvaluacion;
+
     @NotNull(message = "La fecha/hora de la consulta es obligatoria")
     @FutureOrPresent(message = "La fecha/hora debe ser presente o futura")
     @Schema(description = "Fecha y hora de la consulta", example = "2025-12-21T15:00:00", required = true)

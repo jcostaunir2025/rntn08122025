@@ -10,14 +10,11 @@ import java.util.List;
 
 /**
  * Repositorio JPA para Evaluacion
+ * ⭐ UPDATED: Removed findByConsultaIdConsulta - relationship reversed (use ConsultaRepository.findByEvaluacionIdEvaluacion)
  */
 @Repository
 public interface EvaluacionRepository extends JpaRepository<Evaluacion, Integer> {
 
-    /**
-     * Obtiene todas las evaluaciones de una consulta
-     */
-    List<Evaluacion> findByConsultaIdConsulta(Integer idConsulta);
 
     /**
      * Obtiene una evaluación con sus reportes asociados

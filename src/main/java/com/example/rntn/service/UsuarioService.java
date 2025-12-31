@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,6 +32,7 @@ public class UsuarioService {
 
     private final UsuarioRepository usuarioRepository;
     private final UsuarioRolesRepository rolesRepository;
+    private final PasswordEncoder passwordEncoder;
 
     public UsuarioResponse crearUsuario(UsuarioRequest request) {
         log.info("Creando usuario: {}", request.getNombreUsuario());
@@ -47,12 +49,13 @@ public class UsuarioService {
             roles.add(rol);
         }
 
-        // TODO: En producción, hashear la contraseña con BCrypt
-        // String hashedPassword = passwordEncoder.encode(request.getPassUsuario());
+        // Hash password with BCrypt
+        String hashedPassword = passwordEncoder.encode(request.getPassUsuario());
+        log.debug("Password hashed successfully for user: {}", request.getNombreUsuario());
 
         Usuario usuario = Usuario.builder()
             .nombreUsuario(request.getNombreUsuario())
-            .passUsuario(request.getPassUsuario()) // TODO: Hashear
+            .passUsuario(hashedPassword)
             .roles(roles)
             .build();
 
@@ -105,7 +108,12 @@ public class UsuarioService {
         }
 
         usuario.setNombreUsuario(request.getNombreUsuario());
-        usuario.setPassUsuario(request.getPassUsuario()); // TODO: Hashear
+
+        // Hash password if it's being changed
+        String hashedPassword = passwordEncoder.encode(request.getPassUsuario());
+        usuario.setPassUsuario(hashedPassword);
+        log.debug("Password updated and hashed for user: {}", usuario.getNombreUsuario());
+
         usuario.setRoles(roles);
 
         usuario = usuarioRepository.save(usuario);

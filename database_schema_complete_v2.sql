@@ -143,11 +143,14 @@ COMMENT='Consultation status catalog';
 -- Description: Medical consultations/sessions
 -- ⭐ UPDATED: estatus_consulta uses FK to consulta_estatus.id_consulta_estatus (N:1 relationship)
 --            Many consultations can share the same status
+-- ⭐ UPDATED: Added id_evaluacion FK (N:1 relationship)
+--            Many consultations can reference the same evaluation
 -- ----------------------------------------------------------------------------
 CREATE TABLE consulta (
                           id_consulta INT PRIMARY KEY AUTO_INCREMENT,
                           id_paciente INT NOT NULL,
                           id_personal INT NOT NULL,
+                          id_evaluacion INT NULL COMMENT '⭐ N:1 FK to evaluacion - Many consultations can use same evaluation',
                           fechahora_consulta TIMESTAMP NOT NULL COMMENT 'Consultation start date/time',
                           fechafin_consulta TIMESTAMP NULL COMMENT 'Consultation end date/time',
                           estatus_consulta INT NOT NULL COMMENT '⭐ N:1 FK to consulta_estatus.id_consulta_estatus',
@@ -157,40 +160,36 @@ CREATE TABLE consulta (
     -- Foreign keys
                           FOREIGN KEY (id_paciente) REFERENCES paciente(id_paciente) ON DELETE CASCADE,
                           FOREIGN KEY (id_personal) REFERENCES personal(id_personal) ON DELETE RESTRICT,
+                          FOREIGN KEY (id_evaluacion) REFERENCES evaluacion(id_evaluacion) ON DELETE SET NULL ON UPDATE CASCADE,
                           FOREIGN KEY (estatus_consulta) REFERENCES consulta_estatus(id_consulta_estatus) ON DELETE RESTRICT ON UPDATE CASCADE,
 
     -- Indexes
                           INDEX idx_id_paciente (id_paciente),
                           INDEX idx_id_personal (id_personal),
+                          INDEX idx_id_evaluacion (id_evaluacion),
                           INDEX idx_fechahora_consulta (fechahora_consulta),
                           INDEX idx_estatus_consulta (estatus_consulta),
                           INDEX idx_consulta_paciente_estatus (id_paciente, estatus_consulta),
                           INDEX idx_consulta_personal_fecha (id_personal, fechahora_consulta)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-COMMENT='⭐ Medical consultation sessions with N:1 FK constraint to consulta_estatus.id_consulta_estatus';
+COMMENT='⭐ Medical consultation sessions with N:1 FK constraints to evaluacion and consulta_estatus';
 
 -- ----------------------------------------------------------------------------
 -- Table: evaluacion
--- Description: Evaluations performed during consultations
+-- Description: Evaluations that can be referenced by consultations
 -- ⭐ Enhanced with titulo and fecha fields
+-- ⭐ UPDATED: Removed id_consulta FK - Relationship moved to consulta table (N:1)
 -- ----------------------------------------------------------------------------
 CREATE TABLE evaluacion (
                             id_evaluacion INT PRIMARY KEY AUTO_INCREMENT,
-                            id_consulta INT NOT NULL,
                             titulo_evaluacion VARCHAR(100) NULL COMMENT '⭐ Evaluation title',
                             nombre_evaluacion VARCHAR(100) NOT NULL COMMENT 'Evaluation name/type',
                             fecha_evaluacion TIMESTAMP NULL COMMENT '⭐ Evaluation date',
                             area_evaluacion VARCHAR(100) COMMENT 'Area being evaluated (depression, anxiety, etc.)',
                             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-
-    -- Foreign keys
-                            FOREIGN KEY (id_consulta) REFERENCES consulta(id_consulta) ON DELETE CASCADE,
-
-    -- Indexes
-                            INDEX idx_id_consulta (id_consulta)
+                            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-COMMENT='Mental health evaluations';
+COMMENT='Mental health evaluations - Referenced by consulta table (N:1)';
 
 -- ----------------------------------------------------------------------------
 -- Table: evaluacion_pregunta

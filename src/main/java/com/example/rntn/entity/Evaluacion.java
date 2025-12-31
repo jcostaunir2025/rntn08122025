@@ -10,9 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "evaluacion", indexes = {
-    @Index(name = "idx_id_consulta", columnList = "id_consulta")
-})
+@Table(name = "evaluacion")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -25,12 +23,14 @@ public class Evaluacion {
     @Column(name = "id_evaluacion")
     private Integer idEvaluacion;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_consulta", nullable = false)
-    private Consulta consulta;
+    @Column(name = "titulo_evaluacion", length = 100)
+    private String tituloEvaluacion;
 
     @Column(name = "nombre_evaluacion", nullable = false, length = 100)
     private String nombreEvaluacion;
+
+    @Column(name = "fecha_evaluacion")
+    private LocalDateTime fechaEvaluacion;
 
     @Column(name = "area_evaluacion", length = 100)
     private String areaEvaluacion;

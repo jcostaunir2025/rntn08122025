@@ -116,7 +116,7 @@ public class ReporteService {
             .evaluacion(ReporteResponse.EvaluacionInfo.builder()
                 .idEvaluacion(reporte.getEvaluacion().getIdEvaluacion())
                 .nombreEvaluacion(reporte.getEvaluacion().getNombreEvaluacion())
-                .idConsulta(reporte.getEvaluacion().getConsulta().getIdConsulta())
+                .tituloEvaluacion(reporte.getEvaluacion().getTituloEvaluacion())
                 .build())
             .fechageneracionReporte(reporte.getFechageneracionReporte())
             .nombreReporte(reporte.getNombreReporte())

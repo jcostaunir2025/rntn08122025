@@ -47,10 +47,17 @@ public interface ConsultaRepository extends JpaRepository<Consulta, Integer> {
     );
 
     /**
-     * Obtiene una consulta con sus evaluaciones (JOIN FETCH para evitar N+1)
+     * Obtiene una consulta con su evaluación (JOIN FETCH para evitar N+1)
+     * ⭐ UPDATED: Now fetches single evaluacion (N:1 relationship)
      */
-    @Query("SELECT c FROM Consulta c LEFT JOIN FETCH c.evaluaciones WHERE c.idConsulta = :id")
+    @Query("SELECT c FROM Consulta c LEFT JOIN FETCH c.evaluacion WHERE c.idConsulta = :id")
     Consulta findByIdWithEvaluaciones(@Param("id") Integer id);
+
+    /**
+     * Obtiene todas las consultas que usan una evaluación específica
+     * ⭐ NEW: Relationship reversed - many consultas can reference one evaluacion
+     */
+    List<Consulta> findByEvaluacionIdEvaluacion(Integer idEvaluacion);
 
     /**
      * Consultas en un rango de fechas (sin paginación)

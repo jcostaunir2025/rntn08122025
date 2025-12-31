@@ -60,7 +60,7 @@ public class ReporteResponse {
     public static class EvaluacionInfo {
         private Integer idEvaluacion;
         private String nombreEvaluacion;
-        private Integer idConsulta;
+        private String tituloEvaluacion;
     }
 }
 

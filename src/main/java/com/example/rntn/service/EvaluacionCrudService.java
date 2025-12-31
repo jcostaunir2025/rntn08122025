@@ -2,10 +2,8 @@ package com.example.rntn.service;
 
 import com.example.rntn.dto.request.EvaluacionRequest;
 import com.example.rntn.dto.response.EvaluacionResponse;
-import com.example.rntn.entity.Consulta;
 import com.example.rntn.entity.Evaluacion;
 import com.example.rntn.exception.ResourceNotFoundException;
-import com.example.rntn.repository.ConsultaRepository;
 import com.example.rntn.repository.EvaluacionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Servicio CRUD para Evaluaciones
+ * ⭐ UPDATED: Removed consulta dependency - Relationship is now in Consulta entity (N:1)
  */
 @Service
 @RequiredArgsConstructor
@@ -22,16 +21,12 @@ import org.springframework.transaction.annotation.Transactional;
 public class EvaluacionCrudService {
 
     private final EvaluacionRepository evaluacionRepository;
-    private final ConsultaRepository consultaRepository;
 
     public EvaluacionResponse crearEvaluacion(EvaluacionRequest request) {
         log.info("Creando evaluación: {}", request.getNombreEvaluacion());
 
-        Consulta consulta = consultaRepository.findById(request.getIdConsulta())
-            .orElseThrow(() -> new ResourceNotFoundException("Consulta no encontrada: " + request.getIdConsulta()));
-
         Evaluacion evaluacion = Evaluacion.builder()
-            .consulta(consulta)
+            .tituloEvaluacion(request.getTituloEvaluacion())
             .nombreEvaluacion(request.getNombreEvaluacion())
             .areaEvaluacion(request.getAreaEvaluacion())
             .build();
@@ -55,13 +50,7 @@ public class EvaluacionCrudService {
         Evaluacion evaluacion = evaluacionRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Evaluación no encontrada: " + id));
 
-        // Actualizar consulta si cambió
-        if (!evaluacion.getConsulta().getIdConsulta().equals(request.getIdConsulta())) {
-            Consulta consulta = consultaRepository.findById(request.getIdConsulta())
-                .orElseThrow(() -> new ResourceNotFoundException("Consulta no encontrada: " + request.getIdConsulta()));
-            evaluacion.setConsulta(consulta);
-        }
-
+        evaluacion.setTituloEvaluacion(request.getTituloEvaluacion());
         evaluacion.setNombreEvaluacion(request.getNombreEvaluacion());
         evaluacion.setAreaEvaluacion(request.getAreaEvaluacion());
 
@@ -82,14 +71,10 @@ public class EvaluacionCrudService {
     private EvaluacionResponse mapToResponse(Evaluacion evaluacion) {
         return EvaluacionResponse.builder()
             .idEvaluacion(evaluacion.getIdEvaluacion())
-            .idConsulta(evaluacion.getConsulta().getIdConsulta())
+            .tituloEvaluacion(evaluacion.getTituloEvaluacion())
             .nombreEvaluacion(evaluacion.getNombreEvaluacion())
+            .fechaEvaluacion(evaluacion.getFechaEvaluacion())
             .areaEvaluacion(evaluacion.getAreaEvaluacion())
-            .paciente(EvaluacionResponse.PacienteInfo.builder()
-                .idPaciente(evaluacion.getConsulta().getPaciente().getIdPaciente())
-                .nombrePaciente(evaluacion.getConsulta().getPaciente().getNombrePaciente())
-                .build())
-            .cantidadRespuestas(0) // TODO: Contar respuestas si es necesario
             .createdAt(evaluacion.getCreatedAt())
             .updatedAt(evaluacion.getUpdatedAt())
             .build();

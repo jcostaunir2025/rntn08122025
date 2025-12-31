@@ -11,6 +11,7 @@ import lombok.NoArgsConstructor;
 
 /**
  * DTO de request para crear/actualizar Evaluacion
+ * ⭐ UPDATED: Removed idConsulta - Relationship is now in Consulta entity (N:1)
  */
 @Data
 @Builder
@@ -19,9 +20,9 @@ import lombok.NoArgsConstructor;
 @Schema(description = "Request para crear o actualizar una evaluación")
 public class EvaluacionRequest {
 
-    @NotNull(message = "El ID de la consulta es obligatorio")
-    @Schema(description = "ID de la consulta asociada", example = "1", required = true)
-    private Integer idConsulta;
+    @Size(max = 100, message = "El título no puede exceder 100 caracteres")
+    @Schema(description = "Título de la evaluación", example = "Evaluación Inicial de Riesgo")
+    private String tituloEvaluacion;
 
     @NotBlank(message = "El nombre de la evaluación es obligatorio")
     @Size(max = 100, message = "El nombre no puede exceder 100 caracteres")
@@ -30,7 +31,7 @@ public class EvaluacionRequest {
             required = true)
     private String nombreEvaluacion;
 
-    @Size(max = 50, message = "El área no puede exceder 50 caracteres")
+    @Size(max = 100, message = "El área no puede exceder 100 caracteres")
     @Schema(description = "Área de evaluación", example = "SALUD_MENTAL")
     private String areaEvaluacion;
 }

@@ -6,17 +6,17 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Entidad JPA para Consulta
  * Representa una consulta médica entre un paciente y personal
+ * ⭐ UPDATED: N:1 relationship with Evaluacion (many consultas can reference same evaluacion)
  */
 @Entity
 @Table(name = "consulta", indexes = {
     @Index(name = "idx_id_paciente", columnList = "id_paciente"),
     @Index(name = "idx_id_personal", columnList = "id_personal"),
+    @Index(name = "idx_id_evaluacion", columnList = "id_evaluacion"),
     @Index(name = "idx_fechahora_consulta", columnList = "fechahora_consulta"),
     @Index(name = "idx_estatus_consulta", columnList = "estatus_consulta")
 })
@@ -40,6 +40,10 @@ public class Consulta {
     @JoinColumn(name = "id_personal", nullable = false)
     private Personal personal;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_evaluacion")
+    private Evaluacion evaluacion;
+
     @Column(name = "fechahora_consulta", nullable = false)
     private LocalDateTime fechahoraConsulta;
 
@@ -54,9 +58,6 @@ public class Consulta {
     @JoinColumn(name = "estatus_consulta", insertable = false, updatable = false)
     private ConsultaEstatus consultaEstatus;
 
-    @OneToMany(mappedBy = "consulta", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
-    private List<Evaluacion> evaluaciones = new ArrayList<>();
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -65,11 +66,5 @@ public class Consulta {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
-
-    // Helper methods
-    public void addEvaluacion(Evaluacion evaluacion) {
-        evaluaciones.add(evaluacion);
-        evaluacion.setConsulta(this);
-    }
 }
 

@@ -4,10 +4,12 @@ import com.example.rntn.dto.request.ConsultaRequest;
 import com.example.rntn.dto.response.ConsultaResponse;
 import com.example.rntn.entity.Consulta;
 import com.example.rntn.entity.ConsultaEstatus;
+import com.example.rntn.entity.Evaluacion;
 import com.example.rntn.entity.Paciente;
 import com.example.rntn.entity.Personal;
 import com.example.rntn.exception.ResourceNotFoundException;
 import com.example.rntn.repository.ConsultaRepository;
+import com.example.rntn.repository.EvaluacionRepository;
 import com.example.rntn.repository.PacienteRepository;
 import com.example.rntn.repository.PersonalRepository;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +30,7 @@ public class ConsultaService {
     private final ConsultaRepository consultaRepository;
     private final PacienteRepository pacienteRepository;
     private final PersonalRepository personalRepository;
+    private final EvaluacionRepository evaluacionRepository;
 
     public ConsultaResponse crearConsulta(ConsultaRequest request) {
         log.info("Creando consulta para paciente: {}, personal: {}",
@@ -39,9 +42,16 @@ public class ConsultaService {
         Personal personal = personalRepository.findById(request.getIdPersonal())
             .orElseThrow(() -> new ResourceNotFoundException("Personal no encontrado: " + request.getIdPersonal()));
 
+        Evaluacion evaluacion = null;
+        if (request.getIdEvaluacion() != null) {
+            evaluacion = evaluacionRepository.findById(request.getIdEvaluacion())
+                .orElseThrow(() -> new ResourceNotFoundException("Evaluación no encontrada: " + request.getIdEvaluacion()));
+        }
+
         Consulta consulta = Consulta.builder()
             .paciente(paciente)
             .personal(personal)
+            .evaluacion(evaluacion)
             .fechahoraConsulta(request.getFechahoraConsulta())
             .estatusConsulta(request.getEstatusConsulta())
             .build();
@@ -112,7 +122,7 @@ public class ConsultaService {
     }
 
     private ConsultaResponse mapToResponse(Consulta consulta) {
-        return ConsultaResponse.builder()
+        ConsultaResponse.ConsultaResponseBuilder builder = ConsultaResponse.builder()
             .idConsulta(consulta.getIdConsulta())
             .paciente(ConsultaResponse.PacienteBasicInfo.builder()
                 .idPaciente(consulta.getPaciente().getIdPaciente())
@@ -130,8 +140,19 @@ public class ConsultaService {
             .estatusConsultaNombre(consulta.getConsultaEstatus() != null ?
                 consulta.getConsultaEstatus().getNombreConsultaEstatus() : null)
             .createdAt(consulta.getCreatedAt())
-            .updatedAt(consulta.getUpdatedAt())
-            .build();
+            .updatedAt(consulta.getUpdatedAt());
+
+        // Add evaluacion info if present
+        if (consulta.getEvaluacion() != null) {
+            builder.idEvaluacion(consulta.getEvaluacion().getIdEvaluacion())
+                .evaluacion(ConsultaResponse.EvaluacionBasicInfo.builder()
+                    .idEvaluacion(consulta.getEvaluacion().getIdEvaluacion())
+                    .nombreEvaluacion(consulta.getEvaluacion().getNombreEvaluacion())
+                    .tituloEvaluacion(consulta.getEvaluacion().getTituloEvaluacion())
+                    .build());
+        }
+
+        return builder.build();
     }
 }
 

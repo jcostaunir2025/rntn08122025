@@ -25,6 +25,12 @@ public class ConsultaResponse {
     @Schema(description = "Información básica del personal")
     private PersonalBasicInfo personal;
 
+    @Schema(description = "ID de la evaluación asociada")
+    private Integer idEvaluacion;
+
+    @Schema(description = "Información básica de la evaluación")
+    private EvaluacionBasicInfo evaluacion;
+
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     @Schema(description = "Fecha y hora de inicio de la consulta")
     private LocalDateTime fechahoraConsulta;
@@ -63,6 +69,16 @@ public class ConsultaResponse {
         private Integer idPersonal;
         private String nombrePersonal;
         private String docPersonal;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class EvaluacionBasicInfo {
+        private Integer idEvaluacion;
+        private String nombreEvaluacion;
+        private String tituloEvaluacion;
     }
 }
 
